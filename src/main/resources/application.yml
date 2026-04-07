@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: veriKYC
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/verikyc
+    username: verikyc_user
+    password: verikyc_pass
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+server:
+  port: 8080
+
+
+
