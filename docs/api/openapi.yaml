@@ -1,0 +1,476 @@
+openapi: 3.1.0
+
+info:
+  title: VeriKYC API
+  version: 0.1.0
+  description: |
+    Public REST API for the VeriKYC document verification system.
+    All timestamps are ISO 8601 UTC. All IDs are UUIDs.
+  contact:
+    name: VeriKYC Backend Team
+    email: backend@verikyc.example
+
+servers:
+  - url: http://localhost:8080
+    description: Local dev
+  - url: https://api.verikyc.example
+    description: Production (placeholder)
+
+# ─────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────
+paths:
+
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      tags: [System]
+      summary: Service health check
+      security: []
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/auth/register:
+    post:
+      operationId: registerUser
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/login:
+    post:
+      operationId: loginUser
+      tags: [Auth]
+      summary: Log in and obtain a JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/documents:
+    post:
+      operationId: uploadDocument
+      tags: [Documents]
+      summary: Upload an identity document for verification
+      description: |
+        Accepts an identity document image (PAN/Aadhaar/Passport/DL/Cheque)
+        and an optional selfie. Stores the files, creates a document record
+        in QUEUED status, and enqueues a verification job. The actual ML
+        pipeline runs asynchronously; the response returns immediately with
+        a DocumentSummary that the client can poll via GET /documents/{id}.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [document]
+              properties:
+                document:
+                  type: string
+                  format: binary
+                  description: Identity document image (JPEG/PNG, max 10 MB)
+                selfie:
+                  type: string
+                  format: binary
+                  description: Optional selfie image for face matching (JPEG/PNG, max 5 MB)
+      responses:
+        '201':
+          description: Document accepted and queued for verification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          description: Uploaded file exceeds the size limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      operationId: listDocuments
+      tags: [ Documents ]
+      summary: List the caller's documents (paginated)
+      description: |
+        Returns a paginated list of documents owned by the authenticated
+        user. Newest first. Admins see all documents; regular users see
+        only their own (enforced server-side).
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Zero-based page index
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+      responses:
+        '200':
+          description: Page of documents owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfDocumentSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  # GET /api/v1/documents/{id}
+  /api/v1/documents/{id}:
+    get:
+      operationId: getDocumentById
+      tags: [Documents]
+      summary: Get a document by ID
+      description: |
+        Returns the full document detail for a single document
+        owned by the authenticated user.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: id of the document
+      responses:
+        '200':
+          description: document detail owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/documents/{id}/results:
+    get:
+      operationId: getVerificationResults
+      tags: [ Documents ]
+      summary: Get verification results for a document
+      description: |
+        Returns the ML pipeline verification results for a
+        specific document.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: id of the document
+      responses:
+        '200':
+          description: result of document detail owned by the caller
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  # ────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # Reusable error responses (so we don't repeat ourselves)
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ── System ──────────────────────────────────────────────
+    HealthResponse:
+      type: object
+      required: [status, service, version, timestamp]
+      properties:
+        status:    { type: string, example: UP }
+        service:   { type: string, example: verikyc-backend }
+        version:   { type: string, example: 0.0.1-SNAPSHOT }
+        timestamp: { type: string, format: date-time }
+
+    ErrorResponse:
+      type: object
+      required: [timestamp, status, error, message, path]
+      properties:
+        timestamp: { type: string, format: date-time }
+        status:    { type: integer, example: 400 }
+        error:     { type: string,  example: Bad Request }
+        message:   { type: string,  example: "email must be a valid email address" }
+        path:      { type: string,  example: /api/v1/auth/register }
+
+    # ── Enums ───────────────────────────────────────────────
+    UserRole:
+      type: string
+      enum: [USER, ADMIN, REVIEWER]
+
+    DocumentType:
+      type: string
+      enum: [PAN, AADHAAR, PASSPORT, DL, CHEQUE]
+
+    DocumentStatus:
+      type: string
+      enum: [QUEUED, PROCESSING, VERIFIED, FAILED, REVIEW_NEEDED]
+
+    # ── Auth ────────────────────────────────────────────────
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:    { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:    { type: string, format: email }
+        password: { type: string, format: password }
+
+    User:
+      type: object
+      required: [id, email, role, createdAt]
+      properties:
+        id:        { type: string, format: uuid }
+        email:     { type: string, format: email }
+        role:      { $ref: '#/components/schemas/UserRole' }
+        createdAt: { type: string, format: date-time }
+
+    # ─── EXAMPLE OF A FULLY-DEFINED SCHEMA — copy this pattern ───
+    AuthResponse:
+      type: object
+      required: [accessToken, tokenType, expiresInSeconds, user]
+      properties:
+        accessToken:
+          type: string
+          description: JWT bearer token to send in Authorization header
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        tokenType:
+          type: string
+          example: Bearer
+        expiresInSeconds:
+          type: integer
+          example: 3600
+        user:
+          $ref: '#/components/schemas/User'
+
+    # ── Documents ────────────────────────────────────────────
+    DocumentSummary:
+      type: object
+      required: [ id, status, createdAt, updatedAt ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentType:
+          description: Set after the classification stage; null while QUEUED/PROCESSING
+          oneOf:
+            - $ref: '#/components/schemas/DocumentType'
+            - type: "null"
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    DocumentDetail:
+      type: object
+      required: [ id, status, createdAt, updatedAt, imageUrl  ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentType:
+          description: Set after the classification stage; null while QUEUED/PROCESSING
+          oneOf:
+            - $ref: '#/components/schemas/DocumentType'
+            - type: "null"
+        status:
+          $ref: '#/components/schemas/DocumentStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        imageUrl:
+          type: string
+          format: uri
+          description: Signed GCS URL for the document image
+        selfieUrl:
+          description: Signed GCS URL for the selfie; null if no selfie was uploaded
+          oneOf:
+            - type: string
+              format: uri
+            - type: "null"
+
+    # ── Verification ──────────────────────────────────────────
+    VerificationResult:
+      type: object
+      required: [id, documentId, extractedFields, confidenceScores, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+          description: FK back to the document this result belongs to
+        extractedFields:
+          type: object
+          additionalProperties: true
+          description: OCR output — keys vary by document type (e.g. name, pan, dob)
+        confidenceScores:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+            maximum: 1
+          description: Per-field confidence scores matching extractedFields keys
+        qualityScore:
+          description: Image quality score; null if quality model was not run
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        faceMatchScore:
+          description: ArcFace cosine similarity between document photo and selfie; null if no selfie
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        tamperScore:
+          description: Forgery detection score; null if tamper model was not run
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the ML pipeline finished processing
+    # PageOfDocumentSummary:
+    #   content (array of DocumentSummary),
+    #   page, size, totalElements, totalPages (integers)
+    PageOfDocumentSummary:
+      type: object
+      required: [ content, page, size, totalElements, totalPages ]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentSummary'
+        page:
+          type: integer
+          description: Current zero-based page index
+        size:
+          type: integer
+          description: Number of items in this page
+        totalElements:
+          type: integer
+          format: int64
+          description: Total items across all pages
+        totalPages:
+          type: integer
+          description: Total number of pages
+
+
+    # ────────────────────────────────────────────────────────
