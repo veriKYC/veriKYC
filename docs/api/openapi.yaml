@@ -23,6 +23,7 @@ paths:
 
   /api/v1/health:
     get:
+      operationId: getHealth
       tags: [System]
       summary: Service health check
       security: []
@@ -36,6 +37,7 @@ paths:
 
   /api/v1/auth/register:
     post:
+      operationId: registerUser
       tags: [Auth]
       summary: Register a new user
       security: []
@@ -63,6 +65,7 @@ paths:
 
   /api/v1/auth/login:
     post:
+      operationId: loginUser
       tags: [Auth]
       summary: Log in and obtain a JWT
       security: []
@@ -90,6 +93,7 @@ paths:
 
   /api/v1/documents:
     post:
+      operationId: uploadDocument
       tags: [Documents]
       summary: Upload an identity document for verification
       description: |
@@ -134,6 +138,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
     get:
+      operationId: listDocuments
       tags: [ Documents ]
       summary: List the caller's documents (paginated)
       description: |
@@ -174,11 +179,12 @@ paths:
   # GET /api/v1/documents/{id}
   /api/v1/documents/{id}:
     get:
+      operationId: getDocumentById
       tags: [Documents]
-      summary: document by id
+      summary: Get a document by ID
       description: |
-        Returns a documents owned by the authenticated
-        user.
+        Returns the full document detail for a single document
+        owned by the authenticated user.
       security:
         - bearerAuth: [ ]
       parameters:
@@ -200,18 +206,14 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  #   - path param: id (UUID)
-  #   - response 200: DocumentDetail
-  #   - errors: 401, 404
-  #
-  # GET /api/v1/documents/{id}/results
   /api/v1/documents/{id}/results:
     get:
+      operationId: getVerificationResults
       tags: [ Documents ]
-      summary: result
+      summary: Get verification results for a document
       description: |
-        Returns a documents owned by the authenticated
-        user.
+        Returns the ML pipeline verification results for a
+        specific document.
       security:
         - bearerAuth: [ ]
       parameters:
@@ -233,9 +235,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-  #   - path param: id (UUID)
-  #   - response 200: VerificationResult
-  #   - errors: 401, 404
   # ────────────────────────────────────────────────────────────
 
 # ─────────────────────────────────────────────────────────────
@@ -347,12 +346,7 @@ components:
         user:
           $ref: '#/components/schemas/User'
 
-    # ── TODO(Rajdeep): fill in the document schemas ─────────
-    #
-    # DocumentSummary:
-    #   id (uuid), documentType (DocumentType, nullable),
-    #   status (DocumentStatus), createdAt (date-time),
-    #   updatedAt (date-time)
+    # ── Documents ────────────────────────────────────────────
     DocumentSummary:
       type: object
       required: [ id, status, createdAt, updatedAt ]
@@ -374,10 +368,6 @@ components:
           type: string
           format: date-time
 
-    #
-    # DocumentDetail:
-    #   everything in DocumentSummary, plus:
-    #   imageUrl (string), selfieUrl (string, nullable)
     DocumentDetail:
       type: object
       required: [ id, status, createdAt, updatedAt, imageUrl  ]
@@ -409,34 +399,54 @@ components:
               format: uri
             - type: "null"
 
-    #
+    # ── Verification ──────────────────────────────────────────
     VerificationResult:
       type: object
-      required: []
+      required: [id, documentId, extractedFields, confidenceScores, createdAt]
       properties:
         id:
           type: string
           format: uuid
-          description: key id
-
         documentId:
           type: string
           format: uuid
-          description: key id
-
+          description: FK back to the document this result belongs to
         extractedFields:
-
-
-    #   id (uuid), documentId (uuid),
-    #
-    #   confidenceScores (object — free-form key/number),
-    #   qualityScore (number, 0..1, nullable),
-    #   faceMatchScore (number, 0..1, nullable),
-    #   tamperScore (number, 0..1, nullable),
-    #   boundingBoxes (array, nullable),
-    #   pipelineLog (array, nullable),
-    #   createdAt (date-time)
-    #
+          type: object
+          additionalProperties: true
+          description: OCR output — keys vary by document type (e.g. name, pan, dob)
+        confidenceScores:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+            maximum: 1
+          description: Per-field confidence scores matching extractedFields keys
+        qualityScore:
+          description: Image quality score; null if quality model was not run
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        faceMatchScore:
+          description: ArcFace cosine similarity between document photo and selfie; null if no selfie
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        tamperScore:
+          description: Forgery detection score; null if tamper model was not run
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        createdAt:
+          type: string
+          format: date-time
+          description: When the ML pipeline finished processing
     # PageOfDocumentSummary:
     #   content (array of DocumentSummary),
     #   page, size, totalElements, totalPages (integers)
