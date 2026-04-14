@@ -36,3 +36,5 @@ build/
 ### Secrets ###
 .env
 *.env
+
+backend\.env
