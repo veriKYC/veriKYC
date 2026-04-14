@@ -1,9 +1,12 @@
 package com.verikyc.backend.controller;
 
 import com.verikyc.backend.config.SecurityConfig;
+import com.verikyc.backend.service.UserDetailsServiceImpl;
+import com.verikyc.backend.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -17,6 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class HealthControllerTest {
 
     @Autowired MockMvc mvc;
+
+    @MockBean JwtUtil jwtUtil;
+    @MockBean UserDetailsServiceImpl userDetailsServiceImpl;
 
     @Test
     void healthReturnsUp() throws Exception {
