@@ -1,3 +1,20 @@
+<<<<<<< HEAD
+export interface LoginRequest {
+  email: string
+  password: string
+}
+
+export interface LoginResponse {
+  accessToken: string
+  tokenType: string
+}
+
+export interface RegisterRequest {
+  email: string
+  password: string
+  fullName: string
+}
+=======
 // UserResponse what /auth/login and /auth/register return:
 export interface UserResponse {
     id: string
@@ -22,3 +39,4 @@ export interface ErrorResponse {
     message: string
     path: string
 }
+>>>>>>> 2acabeb6637c78c646df90d024b85d385a4454d5

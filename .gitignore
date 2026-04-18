@@ -27,6 +27,23 @@ frontend/.vite/*
 *.sln
 *.sw?
 
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Frontend ###
+**/node_modules/
+frontend/dist/
+frontend/.vite/
+
+### VS Code ###
+.vscode/
 .claude/
 .vscode/
 backend/.claude/
