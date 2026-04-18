@@ -1,3 +1,4 @@
+<<<<<<< HEAD
   import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
   import LoginPage from './pages/LoginPage'
   import RegisterPage from './pages/RegisterPage'
@@ -14,6 +15,12 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>)
+=======
+import LoginPage from './pages/LoginPage'      
+
+function App() {
+  return <LoginPage />
+>>>>>>> 2acabeb6637c78c646df90d024b85d385a4454d5
 }
 
 export default App

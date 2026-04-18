@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { login } from '../services/authService'
+<<<<<<< HEAD
 import { useNavigate } from 'react-router-dom'
 import { saveToken } from '../utils/tokenStorage'
 
 export default function LoginPage() {
     const navigate = useNavigate()
 
+=======
+
+export default function LoginPage() {
+>>>>>>> 2acabeb6637c78c646df90d024b85d385a4454d5
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -17,8 +22,12 @@ export default function LoginPage() {
         setLoading(true)
         try {
             const response = await login(email, password)
+<<<<<<< HEAD
              saveToken(response.accessToken)
              navigate('/dashboard')
+=======
+            console.log('success', response)
+>>>>>>> 2acabeb6637c78c646df90d024b85d385a4454d5
         } catch (err: any) {
             setError(err.response?.data?.message ?? 'Login failed')
         } finally {
