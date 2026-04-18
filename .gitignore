@@ -50,3 +50,5 @@ backend/.claude/
 backend/.idea/
 backend/HELP.md
 backend/target/
+
+backend/.env
