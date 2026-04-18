@@ -1,10 +1,29 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { register } from '../services/authService'
+import AuthForm from '../components/AuthForm'
+
 export default function RegisterPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-gray-800">Register</h1>
-        <p className="text-sm text-gray-500 mt-2">Coming soon.</p>
-      </div>
-    </div>
-  )
+    const navigate = useNavigate()
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    async function handleSubmit(email: string, password: string) {
+        setError(null)
+        setLoading(true)
+        try {
+            await register(email, password)
+            navigate('/login')
+        } catch (err: any) {
+            setError(err.response?.data?.message ?? 'Registration failed')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <AuthForm mode="register" onSubmit={handleSubmit} error={error} loading={loading} />
+        </div>
+    )
 }
