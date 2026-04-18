@@ -14,10 +14,7 @@
     "axios": "^1.15.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-<<<<<<< HEAD
     "react-router-dom": "^7.14.1",
-=======
->>>>>>> 2acabeb6637c78c646df90d024b85d385a4454d5
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
