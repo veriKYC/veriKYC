@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: VeriKYC API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Public REST API for the VeriKYC document verification system.
     All timestamps are ISO 8601 UTC. All IDs are UUIDs.
@@ -12,7 +12,9 @@ info:
 
 servers:
   - url: http://localhost:8080
-    description: Local dev
+    description: Local dev (backend)
+  - url: http://localhost:8000
+    description: Local dev (cv-service — internal only)
   - url: https://api.verikyc.example
     description: Production (placeholder)
 
@@ -120,6 +122,13 @@ paths:
                   type: string
                   format: binary
                   description: Optional selfie image for face matching (JPEG/PNG, max 5 MB)
+            encoding:
+              document:
+                contentType: image/jpeg, image/png
+                x-max-size: 10485760   # 10 MB in bytes
+              selfie:
+                contentType: image/jpeg, image/png
+                x-max-size: 5242880    # 5 MB in bytes
       responses:
         '201':
           description: Document accepted and queued for verification
@@ -176,6 +185,39 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  # ── CV Service (internal — backend → cv-service only) ────────
+  /classify:
+    post:
+      operationId: classifyDocument
+      tags: [CV Internal]
+      summary: Classify and extract fields from a document image
+      description: |
+        Internal endpoint called by the backend worker after pulling a job
+        from the queue. Not exposed to end users — no JWT required, but
+        the cv-service must only be reachable from within the VPC.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassifyRequest'
+      responses:
+        '200':
+          description: Classification and extraction complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassifyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Image could not be processed (too blurry, corrupt, unsupported format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   # GET /api/v1/documents/{id}
   /api/v1/documents/{id}:
     get:
@@ -319,7 +361,7 @@ components:
         email:    { type: string, format: email }
         password: { type: string, format: password }
 
-    User:
+    UserResponse:
       type: object
       required: [id, email, role, createdAt]
       properties:
@@ -328,7 +370,6 @@ components:
         role:      { $ref: '#/components/schemas/UserRole' }
         createdAt: { type: string, format: date-time }
 
-    # ─── EXAMPLE OF A FULLY-DEFINED SCHEMA — copy this pattern ───
     AuthResponse:
       type: object
       required: [accessToken, tokenType, expiresInSeconds, user]
@@ -344,7 +385,7 @@ components:
           type: integer
           example: 3600
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/UserResponse'
 
     # ── Documents ────────────────────────────────────────────
     DocumentSummary:
@@ -472,5 +513,64 @@ components:
           type: integer
           description: Total number of pages
 
+
+    # ── CV Internal ──────────────────────────────────────────
+    ClassifyRequest:
+      type: object
+      required: [documentId, imageUrl]
+      properties:
+        documentId:
+          type: string
+          format: uuid
+          description: The document ID from the backend — used to post results back
+        imageUrl:
+          type: string
+          format: uri
+          description: Signed GCS URL the cv-service reads the image from
+        selfieUrl:
+          description: Signed GCS URL for the selfie; null if no selfie was uploaded
+          oneOf:
+            - type: string
+              format: uri
+            - type: "null"
+
+    ClassifyResponse:
+      type: object
+      required: [documentId, documentType, extractedFields, confidenceScores]
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        documentType:
+          $ref: '#/components/schemas/DocumentType'
+        extractedFields:
+          type: object
+          additionalProperties: true
+          description: OCR output — keys vary by document type (e.g. name, pan, dob)
+        confidenceScores:
+          type: object
+          additionalProperties:
+            type: number
+            minimum: 0
+            maximum: 1
+        qualityScore:
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        faceMatchScore:
+          description: ArcFace cosine similarity; null if no selfie was provided
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
+        tamperScore:
+          oneOf:
+            - type: number
+              minimum: 0
+              maximum: 1
+            - type: "null"
 
     # ────────────────────────────────────────────────────────
