@@ -1,10 +1,8 @@
 package com.verikyc.backend;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class VeriKycApplicationTests {
+class VeriKycApplicationTests extends AbstractIntegrationTest {
 
     @Test
     void contextLoads() {
