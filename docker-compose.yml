@@ -12,5 +12,19 @@ services:
     volumes:
       - verikyc-pgdata:/var/lib/postgresql/data
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: verikyc-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: rajdeepthaosen7@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: 1234567890
+    depends_on:
+      - postgres
+    volumes:
+      - verikyc-pgadmin:/var/lib/pgadmin
+
 volumes:
   verikyc-pgdata:
+  verikyc-pgadmin:
