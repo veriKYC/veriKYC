@@ -27,14 +27,9 @@ public class DocumentController {
     public ResponseEntity<DocumentSummaryResponse> uploadDocument(
             @RequestPart("document") MultipartFile document,
             @RequestPart(value = "selfie", required = false) MultipartFile selfie,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
 
-        try {
-            DocumentSummaryResponse response = documentService.upload(document, selfie, userDetails.getUsername());
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IOException e) {
-            // Log the exception for debugging purposes
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // Or a proper error DTO
-        }
+        DocumentSummaryResponse response = documentService.upload(document, selfie, userDetails.getUsername());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
