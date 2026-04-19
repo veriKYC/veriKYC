@@ -53,4 +53,5 @@ backend/target/
 
 .env
 backend/.env
-backend/uploads/
+backend/uploads/cv-service/app/**/__pycache__/
+cv-service/**/*.pyc
