@@ -1,5 +1,7 @@
 version: '3.8'
+
 services:
+
   postgres:
     image: postgres:16-alpine
     container_name: verikyc-postgres
@@ -11,6 +13,11 @@ services:
       POSTGRES_PASSWORD: verikyc_pass
     volumes:
       - verikyc-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verikyc_user -d verikyc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -24,6 +31,32 @@ services:
       - postgres
     volumes:
       - verikyc-pgadmin:/var/lib/pgadmin
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: verikyc-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/verikyc
+      SPRING_DATASOURCE_USERNAME: verikyc_user
+      SPRING_DATASOURCE_PASSWORD: verikyc_pass
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cv-service:
+    build:
+      context: ./cv-service
+      dockerfile: Dockerfile
+    container_name: verikyc-cv-service
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
 
 volumes:
   verikyc-pgdata:

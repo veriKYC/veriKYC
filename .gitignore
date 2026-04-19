@@ -51,5 +51,6 @@ backend/.idea/
 backend/HELP.md
 backend/target/
 
+.env
 backend/.env
 backend/uploads/
