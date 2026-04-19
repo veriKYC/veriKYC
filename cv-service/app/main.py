@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import health
+from app.routers import classify, health
 
 app = FastAPI(
     title="VeriKYC CV Service",
@@ -9,3 +9,4 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
+app.include_router(classify.router)
