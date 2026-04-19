@@ -52,3 +52,4 @@ backend/HELP.md
 backend/target/
 
 backend/.env
+backend/uploads/
