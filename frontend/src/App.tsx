@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import UploadPage from './pages/UploadPage'
 import PrivateRoute from './components/PrivateRoute'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+        <Route path="/upload" element={<PrivateRoute><UploadPage /></PrivateRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
