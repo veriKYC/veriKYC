@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import UploadPage from './pages/UploadPage'
+import DocumentStatusPage from './pages/DocumentStatusPage'
 import PrivateRoute from './components/PrivateRoute'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
         <Route path="/upload" element={<PrivateRoute><UploadPage /></PrivateRoute>} />
+        <Route path="/documents/:id" element={<PrivateRoute><DocumentStatusPage /></PrivateRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

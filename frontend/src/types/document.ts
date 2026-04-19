@@ -8,3 +8,8 @@ export interface DocumentSummary {
     createdAt: string
     updatedAt: string
 }
+
+export interface DocumentDetail extends DocumentSummary {
+    imageUrl: string
+    selfieUrl: string | null
+}
