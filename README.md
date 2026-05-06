@@ -11,6 +11,13 @@
 
 An AI-powered KYC document verification system. Upload a PAN card, Aadhaar, Passport, Driving License, or Cheque — VeriKYC classifies the document type, extracts text fields via OCR, validates the data, and matches the face against a selfie.
 
+| Repo | Description |
+|------|-------------|
+| [verikyc-backend](https://github.com/veriKYC/verikyc-backend) | Spring Boot REST API — auth, document management, CV orchestration |
+| [verikyc-cv](https://github.com/veriKYC/verikyc-cv) | FastAPI ML service — EfficientNet classification, PaddleOCR, field validation, face matching |
+| [verikyc-frontend](https://github.com/veriKYC/verikyc-frontend) | React SPA — upload flow, processing status, results page, dashboard |
+| [verikyc-infra](https://github.com/veriKYC/verikyc-infra) | Docker Compose, GCP deployment scripts, Terraform configs |
+
 ---
 
 ## Why this project
@@ -79,17 +86,6 @@ Upload → Classify → OCR → Validate → Face Match → Quality Check → Ta
 | Infra | Docker + Docker Compose + GCP Cloud Run + Cloud SQL + Artifact Registry |
 | CI/CD | Google Cloud Build — triggered on push to dev branch |
 | IaC | Terraform *(Phase 4)* |
-
----
-
-## Repositories
-
-| Repo | Description |
-|------|-------------|
-| [verikyc-backend](https://github.com/veriKYC/verikyc-backend) | Spring Boot REST API — auth, document management, CV orchestration, verification results |
-| [verikyc-cv](https://github.com/veriKYC/verikyc-cv) | FastAPI ML service — EfficientNet classification, PaddleOCR, field validation, face matching |
-| [verikyc-frontend](https://github.com/veriKYC/verikyc-frontend) | React SPA — upload flow, processing status, results page, dashboard |
-| [verikyc-infra](https://github.com/veriKYC/verikyc-infra) | Docker Compose, GCP deployment scripts, Terraform configs |
 
 ---
 
