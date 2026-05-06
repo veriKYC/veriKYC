@@ -78,7 +78,7 @@ Upload → Classify → OCR → Validate → Face Match → Quality Check → Ta
 | Layer | Technology |
 |-------|-----------|
 | Backend | Java 17 + Spring Boot 3.x + Spring Security + Spring Data JPA + WebFlux |
-| CV / ML | Python 3.11 + FastAPI + PyTorch + EfficientNet-B0 + PaddleOCR + ArcFace + ONNX Runtime |
+| CV / ML | Python 3.10 + FastAPI + PyTorch + EfficientNet-B0 + PaddleOCR + ArcFace + ONNX Runtime |
 | Frontend | React 18 + Tailwind CSS + Axios + React Router |
 | Database | PostgreSQL 15 — JSONB for extracted fields and confidence scores |
 | Queue | RabbitMQ (local) / Cloud Pub/Sub (GCP) |
